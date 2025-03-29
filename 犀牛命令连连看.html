@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>犀牛命令连连看</title>
+    <style>
+        /* 修改为自定义容器选择器 */
+        #rhino-game {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex; /* 使用 flexbox 布局 */
+            flex-direction: column; /* 垂直排列子元素 */
+            justify-content: center; /* 垂直居中 */
+            align-items: center; /* 水平居中 */
+            /* 修改为渐变色背景 */
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 40vh;
+            background-size: cover; /* 背景图像覆盖整个容器 */
+            background-position: center; /* 背景图像居中显示 */
+            min-height: 80vh; /* 设置最小高度为视口高度的 50% */;
+            padding-bottom: 60px; /* 添加底部内边距 */
+            border-radius: 15px; /* 添加圆角效果 */
+            
+           
+        }
+
+        #rhino-game h1 {
+            margin: 20px 0;
+        }
+
+        /* 调整 game-container 的样式 */
+        #rhino-game .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px; 
+            width: 70%; 
+            max-width: 600px;
+            margin: 0;
+            border: 2px solid #ccc;
+            padding: 10px; 
+            box-sizing: border-box;
+            background: none; 
+            border-radius: 10px; 
+        }
+
+        #rhino-game .tile {
+            /* 减小内填充 */
+            padding: 8px; 
+            /* 保留毛玻璃效果 */
+            background: rgba(255, 255, 255, 0.2); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid #ccc; /* 恢复方块的边框样式 */
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+            /* 调大字体大小 */
+            font-size: 16px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1 / 1;
+            width: auto;
+            box-sizing: border-box;
+            word-wrap: break-word;
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* 小屏幕尺寸，如手机 */
+        @media (max-width: 480px) {
+            #rhino-game .game-container {
+                width: 95%; /* 让棋盘宽度占屏幕宽度的 90% */
+                max-width: none; /* 取消最大宽度限制 */
+                /* 进一步减小格子之间的间距 */
+                gap: 4px; 
+                /* 减小内边距 */
+                padding: 2px; 
+            }
+
+            #rhino-game .tile {
+                /* 进一步减小文字大小 */
+                font-size: 10px; 
+                /* 减小格子内的填充 */
+                padding: 6px; 
+            }
+        }
+
+        /* 中等屏幕尺寸，如平板 */
+        @media (min-width: 481px) and (max-width: 768px) {
+            #rhino-game .game-container {
+                width: 80%; /* 让棋盘宽度占屏幕宽度的 80% */
+                max-width: 500px; /* 调整最大宽度 */
+                /* 调整格子之间的间距 */
+                gap: 10px; 
+                /* 调整内边距 */
+                padding: 10px; 
+            }
+
+            #rhino-game .tile {
+                /* 调整文字大小 */
+                font-size: 12px; 
+                /* 调整格子内的填充 */
+                padding: 8px; 
+            }
+        }
+        /* 添加悬浮效果 */
+        #rhino-game .tile:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+            background-color: #d0f0d0;
+        }
+
+        /* 定义方块消失动画 */
+        @keyframes shrink {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        #rhino-game .tile.hidden {
+            animation: shrink 0.5s ease-in-out forwards;
+        }
+
+        /* 开始游戏按钮样式 */
+        #rhino-game #start-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* 通关界面样式 */
+        #rhino-game #game-over {
+            display: none;
+            margin-top: 50px;
+        }
+
+        /* 抖动动画 */
+        @keyframes shake {
+            0% {
+                transform: translate(1px, 1px) rotate(0deg);
+            }
+            10% {
+                transform: translate(-1px, -2px) rotate(-1deg);
+            }
+            20% {
+                transform: translate(-3px, 0px) rotate(1deg);
+            }
+            30% {
+                transform: translate(3px, 2px) rotate(0deg);
+            }
+            40% {
+                transform: translate(1px, -1px) rotate(1deg);
+            }
+            50% {
+                transform: translate(-1px, 2px) rotate(-1deg);
+            }
+            60% {
+                transform: translate(-3px, 1px) rotate(0deg);
+            }
+            70% {
+                transform: translate(3px, 1px) rotate(-1deg);
+            }
+            80% {
+                transform: translate(-1px, -1px) rotate(1deg);
+            }
+            90% {
+                transform: translate(1px, 2px) rotate(0deg);
+            }
+            100% {
+                transform: translate(1px, -2px) rotate(-1deg);
+            }
+        }
+
+        #rhino-game .tile.shake {
+            animation: shake 0.5s;
+            animation-iteration-count: 1;
+        }
+
+        /* 重新游戏按钮样式 */
+        #rhino-game #restart-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 使用自定义容器包裹游戏内容 -->
+    <div id="rhino-game">
+        <h1>犀牛命令连连看</h1>
+        <!-- 添加开始游戏按钮 -->
+        <button id="start-button">开始游戏</button>
+        <div class="game-container" id="game-container" style="display: none;"></div>
+        <!-- 通关界面 -->
+        <div id="game-over">
+            <h2>游戏通关</h2>
+            <p>通关时间: <span id="elapsed-time"></span>秒</p>
+            <!-- 添加重新游戏按钮 -->
+            <button id="restart-button">重新游戏</button>
+        </div>
+    </div>
+
+    <script>
+        // 数据对照表
+        const data = [
+            // 完整的数据对照表内容
+            ["ArrayPolar", "环形阵列"],
+            ["ArrayLinear", "直线阵列"],
+            ["ArrayCrvOnSrf", "阵列曲线到曲面上"],
+            ["ArrayCrv", "沿着曲线阵列"],
+            ["Array", "矩形阵列"],
+            ["ArcBlend", "弧形混接"],
+            ["ApplyCrv", "应用曲线到曲面上"],
+            ["Arc", "中心点圆弧"],
+            ["Align", "对齐"],
+            ["Block", "定义块"],
+            ["Box", "盒子方块"],
+            ["BlockManager", "管理块"],
+            ["BooleanDifference", "布尔运算差集"],
+            ["BooleanUnion", "布尔运算并集"],
+            ["BooleanIntersection", "布尔运算交集"],
+            ["BooleanSplit", "布尔运算分割"],
+            ["BackgroundBitmap", "背景图导入"],
+            ["MergeCoplanarFace", "合并同一平面"],
+            ["BlendCrv", "混接曲线"],
+            ["BlendSrf", "混接曲面"],
+            ["Curve", "曲线"],
+            ["Circle", "圆形"],
+            ["Circle P", "两点圆形"],
+            ["CageEdit", "变形控制器"],
+            ["InterpCrv", "内插点曲线"],
+            ["Crv2View", "两个视图的曲线"],
+            ["ChamferEdge", "边缘倒斜角"],
+            ["Contour", "等高线"],
+            ["CreateUVCrv", "建立UV曲线"],
+            ["ChangeDegree", "更改阶数"],
+            ["ChangeLayer", "改变图层"],
+            ["DupEdge", "复制边缘"],
+            ["Ellipse", "椭圆"],
+            ["DupBorder", "复制边框"],
+            ["DeleteSubCrv", "截断曲线"],
+            ["Divide", "等分点"],
+            ["ExtrudeCrv", "拉伸"],
+            ["ExtractIsoCurve", "抽离结构线"],
+            ["ExtractWireframe", "抽离线框"],
+            ["ExplodeBlock", "炸开组块"],
+            ["EdgeSrf", "二、三、四边成面"],
+            ["ExtrudeCrvAlongCrv", "沿着曲线挤出曲面"],
+            ["Untrim", "取消修剪"],
+            ["ExtractSrf", "抽离曲面"],
+            ["ExtractSubCrv", "抽离子线段"],
+            ["Extend", "延伸曲线"],
+            ["ExtendCrvOnSrf", "延伸曲面上的曲线"],
+            ["ExtendSrf", "延伸曲面边缘"],
+            ["FilletEdge", "边缘圆角"],
+            ["FilletSrf", "曲面圆角"],
+            ["Fillet", "曲线圆角"],
+            ["Cap", "加盖"],
+            ["Flow", "沿着曲线流动"],
+            ["Flip", "翻转方向"],
+            ["Fin", "沿着法线方向挤出面"],
+            ["FlowAlongSrf", "沿着曲面流动"],
+            ["Group", "群组"],
+            ["UnGroup", "解组"],
+            ["RemoveFromGroup", "移出群组"],
+            ["Hide", "隐藏选择"],
+            ["Show", "显示隐藏"],
+            ["Helix", "螺旋线"],
+            ["Isolate", "单独显示选中物体"],
+            ["ShowSelected", "按选显示物体"],
+            ["Spiral", "平坦螺旋线"],
+            ["IsolateLock", "反选锁定"],
+            ["InsertKnot", "插入点"],
+            ["InsertControlPoint", "插入控制点"],
+            ["Intersect", "计算相交线"],
+            ["Join", "组合"],
+            ["Line", "创建直线"],
+            ["Line b", "两侧直线"],
+            ["lock", "锁定选择物体"],
+            ["Loft", "放样"],
+            ["MergeAllCoplanarFaces", "合并所有共平面"],
+            ["Move", "移动"],
+            ["MoveUVN", "按UVN移动"],
+            ["MergeEdge", "合并边缘"],
+            ["MergeSrf", "合并曲面"],
+            ["MakeHole", "建立洞"],
+            ["Mirror", "镜像"],
+            ["Match", "衔接曲线"],
+            ["MatchSrf", "衔接曲面"],
+            ["NetworkSrf", "网格线建立曲面"],
+            ["Offset", "偏移曲线"],
+            ["OffsetSrf", "偏移曲面"],
+            ["OffsetCrvOnSrf", "偏移曲面上的曲线"],
+            ["OrientCrvToEdge", "对齐曲线到边缘"],
+            ["OneLayerOn", "只打开一个图层"],
+            ["OrientOncrv", "定位到曲线上"],
+            ["OrientOnSrf", "定位到曲面上"],
+            ["Point", "点"],
+            ["Pipe", "圆管"],
+            ["Polygon", "正多边形"],
+            ["Polyline", "多段线"],
+            ["Project", "投影曲线到曲面上"],
+            ["Pull", "拉回曲线"],
+            ["Orient", "两点定位"],
+            ["Sphere", "球体"],
+            ["Orient3pt", "三点定位"],
+            ["Revolve", "旋转成型"],
+            ["RailRevolve", "沿着路径旋转"],
+            ["Ribbon", "彩带曲面"],
+            ["Rectangle C", "中心点矩形"],
+            ["PlanarSrf", "平面线建立曲面"],
+            ["Rebuild", "重建曲线、曲面"],
+            ["Rectangle", "矩形"],
+            ["RebuildEdges", "重建边缘"],
+            ["RemoveMultiKnot", "移除复节点"],
+            ["Rotate", "旋转"],
+            ["RoundHole", "圆洞"],
+            ["Rotate3d", "3d旋转"],
+            ["Ribbon", "彩带曲面"],
+            ["Plane", "矩形平面"],
+            ["Sweep2", "双轨扫掠"],
+            ["Sweep1", "单轨扫掠"],
+            ["Scale2d", "2轴缩放"],
+            ["Scale", "3轴缩放"],
+            ["SubCrv", "子线段"],
+            ["Split", "分割"],
+            ["SplitEdge", "分割边缘"],
+            ["Shell", "壳、抽壳"],
+            ["ShortPath", "曲面上两点最短路径"],
+            ["Scale1d", "单轴缩放"],
+            ["Setpt", "设定点坐标"],
+            ["ShrinkTrimmedSrf", "缩回已修剪曲面边缘"],
+            ["SelU", "选择U方向点"],
+            ["SelV", "选择V方向的点"],
+            ["SrfSeam", "设定曲面的接缝位置"],
+            ["SetLayerToObject", "设定物体到指定图层"],
+            ["Symmetry", "对称"],
+            ["Trim", "修剪"],
+            ["TweenCurves", "两曲线间建立曲线"],
+            ["UnrollSrf", "展开曲面"],
+            ["Smash", "摊平曲面"],
+            ["UnjoinEdge", "断开曲面连接"],
+            ["UntrimHoles", "补洞"],
+            ["UnlockSelected", "解锁选择的物体"],
+            ["Unlock", "解除冻结物体"],
+            ["Untrim", "取消修剪"],
+            ["Copy", "复制"],
+            ["SetDisplayMode _M _W", "线框显示"],
+            ["SetDisplayMode _M _S", "着色显示"],
+            ["SolidPtOn", "显示实体点"],
+            ["Pushpull", "推拉曲面"],
+            ["SoftMove", "软移动"],
+            ["CPlane", "指定操作平面"],
+            ["Explode", "炸开"],
+            ["Explode _Block", "炸开块"],
+            ["Zoom _Extents", "物体视图居中"],
+            ["ShowEdges", "显示外露边缘"],
+            ["Zebra", "显示斑马纹"],
+            ["Zoom _S", "视图居中选择物体"],
+            ["Radiate", "径向对称"],
+            ["3dFace", "追加面"],
+            ["InsertEdge", "插入环形"],
+            ["InsertEdge _Typ", "插入循环"],
+            ["Reflect", "对称"],
+            ["RemoveSymmetry", "移除对称"],
+            ["ExtrudeSubD", "细分挤出"],
+            ["Inset", "插入细分边缘"],
+            ["Fill", "补洞"],
+            ["OffsetSubD", "细分偏移"],
+            ["Bridge", "桥接"],
+            ["SubDCrease", "加锐边"],
+            ["RemoveCrease", "移除锐边"],
+            ["Slide", "滑动点或线"],
+            ["InsertPoint", "插入点"],
+            ["Bevel", "细分斜角"],
+            ["SubDExpandEdges", "扩展边缘"],
+            ["Stitch", "缝合点和线"]
+        ];
+
+        function decodeHtmlEntities(str) {
+            const textarea = document.createElement("textarea");
+            textarea.innerHTML = str;
+            return textarea.value;
+        }
+
+        // 示例：解码数据中的 HTML 实体
+        data.forEach(pair => {
+            pair[1] = decodeHtmlEntities(pair[1]);
+        });
+
+        // 初始化游戏
+        const gameContainer = document.getElementById("game-container");
+        const startButton = document.getElementById("start-button");
+        const gameOver = document.getElementById("game-over");
+        const elapsedTime = document.getElementById("elapsed-time");
+        const restartButton = document.getElementById("restart-button");
+        let tiles = [];
+        let firstTile = null;
+        let startTime;
+
+        // 随机抽取 6 组数据
+        function getRandomData() {
+            const shuffled = data.sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, 6);
+        }
+
+        // 将数据随机打乱并生成格子
+        function initGame() {
+            startTime = Date.now();
+            const selectedData = getRandomData();
+            const shuffledData = selectedData
+               .flatMap(pair => pair)
+               .sort(() => Math.random() - 0.5);
+
+            gameContainer.innerHTML = '';
+            tiles = [];
+
+            shuffledData.forEach((text, index) => {
+                const tile = document.createElement("div");
+                tile.classList.add("tile");
+                // 处理文本，将单词大致均分为两行，每行以大写字母开头
+                let processedText = text;
+                if (text.length >= 9) {
+                    const mid = Math.floor(text.length / 2);
+                    // 从中间位置开始往前找第一个大写字母
+                    let splitIndex = mid;
+                    while (splitIndex > 0 && !/[A-Z]/.test(text[splitIndex])) {
+                        splitIndex--;
+                    }
+                    // 如果没找到，从中间位置往后找第一个大写字母
+                    if (splitIndex === 0) {
+                        splitIndex = mid;
+                        while (splitIndex < text.length && !/[A-Z]/.test(text[splitIndex])) {
+                            splitIndex++;
+                        }
+                    }
+                    if (splitIndex > 0 && splitIndex < text.length) {
+                        processedText = text.slice(0, splitIndex) + '<br>' + text.slice(splitIndex);
+                    }
+                }
+                tile.innerHTML = processedText;
+                tile.dataset.index = index;
+                gameContainer.appendChild(tile);
+                tiles.push(tile);
+
+                tile.addEventListener("click", () => handleTileClick(tile));
+            });
+        }
+
+        // 处理格子点击
+        function handleTileClick(tile) {
+            if (tile.classList.contains("hidden") || tile === firstTile) return;
+
+            tile.style.backgroundColor = "#d0f0d0";
+            if (!firstTile) {
+                firstTile = tile;
+            } else {
+                const firstText = firstTile.textContent;
+                const secondText = tile.textContent;
+
+                if (isMatch(firstText, secondText)) {
+                    setTimeout(() => {
+                        firstTile.classList.add("hidden");
+                        tile.classList.add("hidden");
+                        firstTile = null;
+                        checkGameOver();
+                    }, 300);
+                } else {
+                    firstTile.classList.add('shake');
+                    tile.classList.add('shake');
+                    setTimeout(() => {
+                        firstTile.style.backgroundColor = "#f0f0f0";
+                        tile.style.backgroundColor = "#f0f0f0";
+                        firstTile.classList.remove('shake');
+                        tile.classList.remove('shake');
+                        firstTile = null;
+                    }, 500);
+                }
+            }
+        }
+
+        // 检查两个格子是否匹配
+        function isMatch(text1, text2) {
+            return data.some(pair => (pair[0] === text1 && pair[1] === text2) || (pair[1] === text1 && pair[0] === text2));
+        }
+
+        // 检查是否所有方块都消除了
+        function checkGameOver() {
+            const allHidden = tiles.every(tile => tile.classList.contains("hidden"));
+            if (allHidden) {
+                const endTime = Date.now();
+                const totalTime = (endTime - startTime) / 1000;
+                elapsedTime.textContent = totalTime.toFixed(2);
+                gameContainer.style.display = 'none';
+                gameOver.style.display = 'block';
+            }
+        }
+
+        // 点击开始游戏按钮的事件处理函数
+        startButton.addEventListener('click', () => {
+            startButton.style.display = 'none';
+            gameContainer.style.display = 'grid';
+            initGame();
+        });
+
+        // 点击重新游戏按钮的事件处理函数
+        restartButton.addEventListener('click', () => {
+            gameOver.style.display = 'none';
+            gameContainer.style.display = 'grid';
+            initGame();
+        });
+    </script>
+</body>
+
+</html>
